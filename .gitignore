@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.pyc
+
+# VS Code
+.vscode/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Generated outputs
+*.png
+*.arf
+*.rsp
+*.pha
+*.mod
+*.dat

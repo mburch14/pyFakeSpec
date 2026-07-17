@@ -4,14 +4,18 @@ import requests
 from astropy.io import fits
 import matplotlib.pyplot as plt
 import numpy as np
+import json
+instrument = 'SWIFTBAT'
 
-
+with open("instrumentCharacteristics.json", "r") as file:
+    jsons = json.load(file)
+chars = jsons[instrument]
 
 #This is for our specific Cubesat
-orb = mc.Orbit(500, 0)
-geo = mc.geometry()
-mission1 = mc.Mission("Cubesat", 15, 150)
-cztDetector = mc.czt(geo, orb, mission1)
+orb = mc.Orbit(chars['altitude'], chars['inclination'])
+geo = mc.geometry() #can also input chars['config']. I did not want to do that.
+mission1 = mc.Mission(instrument, chars['e_min'], chars['e_max'])
+cztDetector = mc.czt(geo, orb, mission1, res = chars["spec_resolution"], grad=chars["spec_gradient"])
 background = mc.CXB(detector=cztDetector)
 exposureTime = 10000 #seconds
 
@@ -19,21 +23,18 @@ AllData.clear()
 AllModels.clear()
 
 '''
-arfname = cztDetector.gen_arf(energy_lo = cztDetector.energy_low, energy_hi = cztDetector.energy_high, arf="cubesat.arf")
-rspname =cztDetector.gen_rsp(arfname)
+arfname = cztDetector.gen_arf(energy_lo = cztDetector.energy_low, energy_hi = cztDetector.energy_high, arf=chars["arf_name"])
+rspname =cztDetector.gen_rsp(arfname, rsp = chars["rsp_name"])
 backgroundname = background.gen_spectrum_table()
-'''
 
-
-# Run this in the terminal: flx2tab cxb_background.dat cxb cxb.mod
-'''
+#turns the ASCII file into an xspec model. 
+subprocess.run(["flx2tab", "cxb_background.dat", "cxb", "cxb.mod"])
 m = Model("atable{cxb.mod}")
 
+#run xspec on the model using the response files. 
 fake = FakeitSettings(response= 'cubesat.rsp', exposure= exposureTime, fileName="simulated.pha")
 AllData.fakeit(1, fake)
-'''
 
-'''
 AllData("simulated.pha")
 Plot.xAxis = "keV"
 Plot("data")
@@ -73,7 +74,6 @@ plt.savefig("cxb.png", dpi=300)
 '''
 
 #This is for testing the ARF file from the HEASARC calibration database.
-
 '''
 arf = fits.open("cubesat.arf")
 

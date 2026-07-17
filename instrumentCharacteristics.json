@@ -1,0 +1,40 @@
+{
+"SWIFTBAT": {
+    "altitide": 600,
+    "inclination": 20,
+    "e_min": 15,
+    "e_max": 300,
+    "config":{
+        "detl": 90,
+        "detw": 60,
+        "dett": 2,
+        "deth": 5.0,
+        "imagTransmission": 0.5,
+        "length": 100.0,
+        "width": 100.0,
+        "height": 100.0},
+    "spec_resolution": 7000,
+    "spec_gradient": 0,
+    "arf_name": "swiftbat.arf",
+    "rsp_name": "swiftbat.rsp"},
+"NUSTAR": {
+    "altitide": 500,
+    "inclination": 6,
+    "e_min": 3,
+    "e_max": 79,
+    "config":{
+        "detl": 90,
+        "detw": 60,
+        "dett": 2,
+        "deth": 5.0,
+        "imagTransmission": 0.5,
+        "length": 100.0,
+        "width": 100.0,
+        "height": 100.0},
+    "spec_resolution": 313.8,
+    "spec_gradient": 8.62,
+    "arf_name": "nustar.arf",
+    "rsp_name": "nustar.rsp"
+}
+}
+

@@ -142,6 +142,7 @@ class detector(ABC):
         self.energy_high = self.energy_edges[1:] #first element to last element
         self.energy = 0.5*(self.energy_low + self.energy_high) #Midpoint of each energy bin.
         self.res = 0
+        self.grad = 0
 
     @abstractmethod
     def effective_area(self, energy):
@@ -183,9 +184,9 @@ class detector(ABC):
         hdul.writeto(arf, overwrite=True) #The name of the output ARF file is stored in arf. This will be used to generate the RMF file.
         return arf
 
-    def gen_rsp(self, arf, rsp="cubesat.rsp", grad=0.0):
+    def gen_rsp(self, arf, rsp="cubesat.rsp"):
         resolution = self.res #keV FWHM at 1 keV, in eV
-        gradient = grad #eV/keV, the change in resolution with energy
+        gradient = self.grad #eV/keV, the change in resolution with energy
         subprocess.run(["ogipgenrsp", #This is the xspec command to generate an RMF file from an ARF file. It is part of the HEASoft package.
             "--arffile", arf, #The arf should be generated first, and then the rmf can be generated from it.
             "--resolution", str(resolution), 
@@ -199,9 +200,10 @@ class detector(ABC):
 
 
 class czt(detector):
-    def __init__(self, geography, orbit, mission):
+    def __init__(self, geography, orbit, mission, res = 6.63e3, grad = 0):
         super().__init__(geography, orbit, mission)
-        self.res = 6.63e3
+        self.res = res
+        self.grad = grad
 
     def effective_area(self, energy):
         #Energy in kev. xraydb.mu_elam takes energy in eV, so we multiply by 1000 to convert from keV to eV.
@@ -221,9 +223,10 @@ class czt(detector):
         return self.geos.collecting_area * (1-np.exp(-atten_const * self.geos.detthickness * 0.1)) #The 0.1 is to convert from mm to cm, since the thickness is in mm and the attenuation constant is in cm^-1.
 
 class silicon (detector):
-    def __init__(self, geography, orbit, mission):
+    def __init__(self, geography, orbit, mission, res = 120, grad = 0):
         super().__init__(geography, orbit, mission)
-        self.res = 120
+        self.res = res
+        self.grad = grad
 
     def effective_area(self, energy):
 

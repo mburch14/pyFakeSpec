@@ -10,9 +10,9 @@
         "dett": 2,//mm
         "deth": 5.0,//cm
         "imagTransmission": 0.5,
-        "length": 100.0,//cm
-        "width": 100.0,//cm
-        "height": 100.0},//cm
+        "length": 100.0,//cm, not for sure
+        "width": 100.0,//cm, not for sure
+        "height": 100.0},//cm, not for sure
     "spec_resolution": 7000,//eV
     "spec_gradient": 0,// eV/keV
     "mask_thickness": 5, //mm
@@ -24,6 +24,7 @@
     "e_min": 3,//keV
     "e_max": 79,//keV
     "config":{
+        //THESE ARE NOT CORRECT. DO NOT USE FOR ANY SCIENCE. LOOK UP BEFORE USING.
         "detl": 90,//cm
         "detw": 60,//cm
         "dett": 2,//mm

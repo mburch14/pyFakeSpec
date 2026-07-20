@@ -254,7 +254,7 @@ class silicon (detector):
         return acoll * (1-np.exp(-atten_const * self.geos.detthickness * 0.1)) #The 0.1 is to convert from mm to cm, since the thickness is in mm and the attenuation constant is in cm^-1.
 
 class optics():
-    def __init__(self, thickness, mask=True):
+    def __init__(self, thickness, mask=False):
         self.thickness = thickness
         self.mask = mask
 
@@ -268,7 +268,14 @@ class lead(optics):
 
     def attenuation(self, energy):
         density = 11.34   # g/cm3
-        atten_const = xraydb.mu_elam('Pb', energy*1000)*density
+        atten_const = xraydb.mu_elam('Pb', energy*1000)*density #Energy in kev. xraydb.mu_elam takes energy in eV, so we multiply by 1000 to convert from keV to eV.
         return np.exp(-atten_const * self.thickness * 0.1) #The 0.1 is to convert from mm to cm, since the thickness is in mm and the attenuation constant is in cm^-1.
 
+class tungsten(optics):
+    def __init__(self, thickness, mask= True):
+        super().__init__(thickness, mask)
 
+    def attenuation(self, energy):
+        density = 19.25   # g/cm3
+        atten_const = xraydb.mu_elam('W', energy*1000)*density #Energy in kev. xraydb.mu_elam takes energy in eV, so we multiply by 1000 to convert from keV to eV.
+        return np.exp(-atten_const * self.thickness * 0.1) #The 0.1 is to convert from mm to cm, since the thickness is in mm and the attenuation constant is in cm^-1.

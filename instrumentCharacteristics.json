@@ -1,6 +1,6 @@
 {
 "SWIFTBAT": {
-    "altitide": 600,//km
+    "altitide": 600,
     "inclination": 20,//degrees
     "e_min": 15,//kev
     "e_max": 200,//keV
@@ -19,7 +19,7 @@
     "arf_name": "swiftbat.arf",
     "rsp_name": "swiftbat.rsp"},
 "NUSTAR": {
-    "altitide": 500,//km
+    "altitide": 500,
     "inclination": 6,//degrees
     "e_min": 3,//keV
     "e_max": 79,//keV

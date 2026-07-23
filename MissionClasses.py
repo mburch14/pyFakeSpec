@@ -142,8 +142,8 @@ class ChargedParticles(BackgroundModel):
         self.altitude = altitude
         self.phi = phi
 
-    def totalIntensity(self, fov_sr):
-        return 0
+    def primaryIntensity(self, fov_sr):
+        return self.protonIntensity(fov_sr) + self.electronpositronIntensity(fov_sr) + self.alphaIntensity(fov_sr)
     
     def protonIntensity(self, fov_sr):
         #Taken from Background simulations for the Large Area Detector onboard LOFT (Campana et al, 2013)
@@ -170,7 +170,7 @@ class ChargedParticles(BackgroundModel):
         F_Upos = 1e-7 * 0.051 * R_IS**-3.3 # particles/cm2/s/sr/keV
         return (F_Uneg + F_Upos) * F_M * C * fov_sr
     
-    def alphapartIntensity(self, fov_sr):
+    def alphaIntensity(self, fov_sr):
         #Taken from Background simulations for the Large Area Detector onboard LOFT (Campana et al, 2013)
         E = np.logspace(-3, 2, 1000)#GeV
         E_IS = E + 2*self.phi #This is for F(E + Z\psi)
@@ -181,8 +181,6 @@ class ChargedParticles(BackgroundModel):
         F_M = self.F_M(energy=E, Mc2=M_pc2, Z=2, phi=self.phi) #unitless; need to fix phi!!!
         F_U = 1e-7 * 1.5 * R_IS**-2.7 # particles/cm2/s/sr/keV 
         return F_U * F_M * C * fov_sr
-    
-
 
 
 class detector(ABC):
@@ -264,7 +262,7 @@ class czt(detector):
         #Add in the likelihood that some photons may be transmitted through the mask.
         acoll = self.geos.collecting_area
         if self.optics.mask == True:
-            acoll += self.optics.attenuation(energy) * (1 - self.geos.imagTransmission) * self.geos.detl * self.geos.detw
+            acoll += self.optics.transmission(energy) * (1 - self.geos.imagTransmission) * self.geos.detl * self.geos.detw
         
         #soft energy cutoff
         if energy < 1:
@@ -293,7 +291,7 @@ class silicon (detector):
         #Add in the likelihood that some photons may be transmitted through the mask.
         acoll = self.geos.collecting_area
         if self.optics.mask == True:
-            acoll += self.optics.attenuation(energy) * (1 - self.geos.imagTransmission) * self.geos.detl * self.geos.detw
+            acoll += self.optics.transmission(energy) * (1 - self.geos.imagTransmission) * self.geos.detl * self.geos.detw
 
         #soft energy cutoff
         if energy < 1:
@@ -312,14 +310,14 @@ class optics():
         self.mask = mask
 
     @abstractmethod
-    def attenuation(self, energy, transmission):
+    def transmission(self, energy):
         pass #All optics calculations will be made in the subclasses, since they will depend on the mask material.
 
 class lead(optics):
     def __init__(self, thickness, mask= True):
         super().__init__(thickness, mask)
 
-    def attenuation(self, energy):
+    def transmission(self, energy):
         density = 11.34   # g/cm3
         atten_const = xraydb.mu_elam('Pb', energy*1000)*density #Energy in kev. xraydb.mu_elam takes energy in eV, so we multiply by 1000 to convert from keV to eV.
         return np.exp(-atten_const * self.thickness * 0.1) #The 0.1 is to convert from mm to cm, since the thickness is in mm and the attenuation constant is in cm^-1.
@@ -328,7 +326,7 @@ class tungsten(optics):
     def __init__(self, thickness, mask= True):
         super().__init__(thickness, mask)
 
-    def attenuation(self, energy):
+    def transmission(self, energy):
         density = 19.25   # g/cm3
         atten_const = xraydb.mu_elam('W', energy*1000)*density #Energy in kev. xraydb.mu_elam takes energy in eV, so we multiply by 1000 to convert from keV to eV.
         return np.exp(-atten_const * self.thickness * 0.1) #The 0.1 is to convert from mm to cm, since the thickness is in mm and the attenuation constant is in cm^-1.

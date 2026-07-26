@@ -1,12 +1,8 @@
 from xspec import *
-import MissionClasses as mc
-import requests
-from astropy.io import fits
 import matplotlib.pyplot as plt
 import numpy as np
-import subprocess
-import commentjson
 import genRSP as genRSP
+from astropy.io import fits
 
 exposureTime = genRSP.exposureTime
 rspname = genRSP.rspname
@@ -25,7 +21,6 @@ fake = FakeitSettings(response= rspname, exposure= exposureTime, fileName="spect
 AllData.fakeit(1, fake)
 
 AllData.clear()
-AllModels.clear()
 AllData("spectrum_files/observation.pha")
 spec = AllData(1)
 
@@ -35,16 +30,14 @@ elow = energies[:,0]
 ehigh = energies[:,1]
 dE = ehigh - elow
 energy = (elow + ehigh) / 2
-Plot.xAxis = "keV"
-Plot("data")
 
-counts = np.array(Plot.y())
-countRate = (counts / exposureTime) / dE #puts the y-axis in the correct units.
-errors = Plot.yErr()
+with fits.open("spectrum_files/observation.pha") as hdul:
+    pha = hdul["SPECTRUM"].data #type: ignore
+    counts = np.array(pha["COUNTS"])
+countRate = ((counts / exposureTime) / dE) /num_det_pixels #puts the y-axis in the correct units.
 
 plt.figure(figsize=(8,5))
 plt.step(energy, countRate, where="mid", color="black")
-plt.errorbar(energy, countRate, yerr=np.array(errors)/exposureTime/dE, fmt="none", color="black", alpha=0.5)
 plt.xlabel("Energy (keV)")
 plt.ylabel("Count rate (counts/s/keV)")
 plt.yscale("log")

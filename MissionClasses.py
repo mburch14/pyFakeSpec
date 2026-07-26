@@ -112,7 +112,7 @@ class BackgroundModel:
 
     def cxb(self, energy, fov_sr):
         #Cosmic X-ray background spectrum from Gruber et al. 1999, ApJ, 520, 124
-        #In units of photons/cm2/s/sr/keV
+        #In units of photons/cm2/s/keV
         C = 10.15e-2
         EB = 29.99  # keV
         gamma1 = 1.32
@@ -123,7 +123,7 @@ class BackgroundModel:
 
     def albedo(self, energy, fov_sr):
         #Albedo spectrum from Ajello et al. 2008, ApJ, 689, 666
-        #In units of photons/cm2/s/sr/keV
+        #In units of photons/cm2/s/keV
         EB = 33.7  #in keV
         Gamma1 = -5
         Gamma2 = 1.72

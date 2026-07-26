@@ -35,14 +35,14 @@ class Orbit:
 class geometry:
 
     defaults = {
-    "detl": 90, #in cm, length of the detector
-    "detw": 60, #in cm, width of the detector
-    "dett": 2, #in mm, thickness of the detector
-    "deth": 5.0, #in cm, height from the bottom of the cubesat to the detector
-    "imagTransmission": 0.5, #Fraction of the photons that make it through the optics and onto the detector.
-    "length": 100.0, #in cm, length of the cubesat
-    "width": 100.0, #in cm, width of the cubesat
-    "height": 100.0,} #in cm, height of the cubesat
+    "detl": 51.2,#cm
+    "detw": 102.4,#cm
+    "dett": 2,#mm
+    "detsep": 1000,#cm; seporation between mask and detector
+    "imagTransmission": 0.5,#percentage of mask covered up
+    "length": 1200,#cm
+    "width": 2400,#cm
+    "height":2000}#cm
 
     def __init__(self, config=None):
         config = config or {} #either use the provided config or an empty dict if none is provided
@@ -53,7 +53,7 @@ class geometry:
         self.detl = settings["detl"]
         self.detw = settings["detw"]
         self.detthickness = settings["dett"] #thickness of the detector
-        self.deth = settings["deth"] #from the bottom of the cubesat to the detector
+        self.detsep = settings["detsep"] #seporation between mask and detector
 
         #represented as a decimal between 0 and 1, where 1 is 100% transmission and 0 is 0% transmission. This is the fraction of open slots in mask (Does not consider optics).
         self.imagTransmission = settings["imagTransmission"]
@@ -64,8 +64,8 @@ class geometry:
         self.h = settings["height"]
 
         #wfov is the field of view in the width direction; lfov is the field of view in the length direction
-        self.wfov = 2*math.atan((self.w -self.detw) / (2*(self.h-self.deth))) #in radians
-        self.lfov = 2*math.atan((self.l -self.detl) / (2*(self.h-self.deth))) #in radians
+        self.wfov = 2*math.atan((self.w -self.detw) / (2*(self.detsep))) #in radians
+        self.lfov = 2*math.atan((self.l -self.detl) / (2*(self.detsep))) #in radians
 
         #total field of view in steradians, calculated using the formula for the solid angle of a rectangle
         self.fov_sr = 4 * np.arcsin(np.sin(self.wfov / 2) * np.sin(self.lfov / 2))
@@ -80,6 +80,7 @@ class geometry:
 class BackgroundModel:
     def __init__(self, detector):
         self.detector = detector
+
 
     def F_M(self, energy, Mc2, Z, phi):
         #energy: particle kinetic energy, GeV
@@ -98,8 +99,18 @@ class BackgroundModel:
         pc = np.sqrt((energy + mc2)**2 - mc2**2) #GeV
         return pc/abs(Z) #GV
 
-class CXB(BackgroundModel):
-    def photonIntensity(self, energy, fov_sr):
+    def gen_spectrum_table(self, output="spectrum_files/background.dat"):
+        energies = self.detector.energy #Gives energy bin midpoints in keV
+        energy_lo = self.detector.energy_low #Gives energy bin lower bounds in keV
+        energy_hi = self.detector.energy_high #Gives energy bin upper bounds in keV
+
+        #flux in units of photons/cm2/s/keV
+        fluxes = np.array(self.cxb(energies, self.detector.geos.fov_sr) + self.albedo(energies, self.detector.geos.fov_sr))
+        table = np.column_stack((energy_lo, energy_hi, fluxes))
+        np.savetxt(output, table, fmt="%.6f %.6f %.8e", comments="")
+        return output
+
+    def cxb(self, energy, fov_sr):
         #Cosmic X-ray background spectrum from Gruber et al. 1999, ApJ, 520, 124
         #In units of photons/cm2/s/sr/keV
         C = 10.15e-2
@@ -110,20 +121,7 @@ class CXB(BackgroundModel):
         intensity = C / ((energy / EB) ** gamma1 + (energy / EB) ** gamma2)
         return intensity * fov_sr
 
-    def gen_spectrum_table(self, output="cxb_background.dat"):
-        energies = self.detector.energy #Gives energy bin midpoints in keV
-        energy_lo = self.detector.energy_low #Gives energy bin lower bounds in keV
-        energy_hi = self.detector.energy_high #Gives energy bin upper bounds in keV
-
-        #flux in units of photons/cm2/s/keV
-        fluxes = np.array(self.photonIntensity(energies, self.detector.geos.fov_sr))
-        table = np.column_stack((energy_lo, energy_hi, fluxes))
-        np.savetxt(output, table, fmt="%.6f %.6f %.8e", comments="")
-        return output
-
-
-class Albedo(BackgroundModel):
-    def photonIntensity(self, energy, fov_sr):
+    def albedo(self, energy, fov_sr):
         #Albedo spectrum from Ajello et al. 2008, ApJ, 689, 666
         #In units of photons/cm2/s/sr/keV
         EB = 33.7  #in keV
@@ -200,7 +198,7 @@ class detector(ABC):
     def effective_area(self, energy):
         pass #All effective area calculations will be made in the subclasses, since they will depend on the detector material.
 
-    def gen_arf(self, energy_lo=None, energy_hi=None, arf="cubesat.arf"):
+    def gen_arf(self, energy_lo=None, energy_hi=None, arf="response_files/cubesat.arf"):
         if energy_lo is None or energy_hi is None:
             energy_edges = np.linspace(self.missions.energymin, self.missions.energymax, self.missions.energymax - self.missions.energymin + 1)
             energy_lo = energy_edges[:-1]
@@ -236,7 +234,7 @@ class detector(ABC):
         hdul.writeto(arf, overwrite=True) #The name of the output ARF file is stored in arf. This will be used to generate the RMF file.
         return arf
 
-    def gen_rsp(self, arf, rsp="cubesat.rsp"):
+    def gen_rsp(self, arf, rsp="response_files/cubesat.rsp"):
         resolution = self.res #keV FWHM at 1 keV, in eV
         gradient = self.grad #eV/keV, the change in resolution with energy
         subprocess.run(["ogipgenrsp", #This is the xspec command to generate an RMF file from an ARF file. It is part of the HEASoft package.
@@ -247,8 +245,6 @@ class detector(ABC):
             "--range", f"{self.missions.energymin}:{self.missions.energymax}",
             "--overwrite"
         ], check=True)
-
-        return rsp
 
 
 class czt(detector):

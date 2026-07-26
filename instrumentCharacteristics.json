@@ -1,43 +1,24 @@
 {
 "SWIFTBAT": {
-    "altitide": 600,
+    "altitide": 550,
     "inclination": 20,//degrees
     "e_min": 15,//kev
-    "e_max": 200,//keV
+    "e_max": 195,//keV
     "config":{
-        "detl": 90,//cm
-        "detw": 60,//cm
+        "detl": 51.2,//cm
+        "detw": 102.4,//cm
         "dett": 2,//mm
-        "deth": 5.0,//cm
+        "detsep": 1000, //cm; seporation between mask and detector
         "imagTransmission": 0.5,
-        "length": 100.0,//cm, not for sure
-        "width": 100.0,//cm, not for sure
-        "height": 100.0},//cm, not for sure
+        "length": 1200,//cm
+        "width": 2400, //cm
+        "height": 2000},//cm
     "spec_resolution": 7000,//eV
     "spec_gradient": 0,// eV/keV
     "mask_thickness": 5, //mm
-    "arf_name": "swiftbat.arf",
-    "rsp_name": "swiftbat.rsp"},
-"NUSTAR": {
-    "altitide": 500,
-    "inclination": 6,//degrees
-    "e_min": 3,//keV
-    "e_max": 79,//keV
-    "config":{
-        //THESE ARE NOT CORRECT. DO NOT USE FOR ANY SCIENCE. LOOK UP BEFORE USING.
-        "detl": 90,//cm
-        "detw": 60,//cm
-        "dett": 2,//mm
-        "deth": 5.0,//cm
-        "imagTransmission": 0.5,
-        "length": 100.0,//cm
-        "width": 100.0,//cm
-        "height": 100.0},//cm
-    "mask_thickness": 0,//Nustar does not have a mask; it is focusing. This is just for my experimentation
-    "spec_resolution": 313.8,//eV
-    "spec_gradient": 8.62,// ev/keV
-    "arf_name": "nustar.arf",
-    "rsp_name": "nustar.rsp"
-}
+    "num_det_pixels": 32768,// the number of singular detector pixels that make up the BAT detector
+    "arf_name": "response_files/swiftbat.arf",
+    "rsp_name": "response_files/swiftbat.rsp"},
+"INTEGRAL":{}
 }
 

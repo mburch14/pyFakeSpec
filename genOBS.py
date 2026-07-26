@@ -6,10 +6,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import subprocess
 import commentjson
-import genRSPfile
+import genRSP as genRSP
 
-exposureTime = genRSPfile.exposureTime
-rspname = genRSPfile.rspname
+exposureTime = genRSP.exposureTime
+rspname = genRSP.rspname
+num_det_pixels = genRSP.num_det_pixels
 
 AllData.clear()
 AllModels.clear()
@@ -20,10 +21,12 @@ crab.powerlaw.PhoIndex = 2.15 #type: ignore
 crab.powerlaw.norm = 10.17 #type: ignore
 
 #run xspec on the model using the response files. 
-fake = FakeitSettings(response= rspname, exposure= exposureTime, fileName="source.pha")  #type: ignore
+fake = FakeitSettings(response= rspname, exposure= exposureTime, fileName="spectrum_files/observation.pha", background = 'spectrum_files/background.pha')  #type: ignore
 AllData.fakeit(1, fake)
 
-AllData("source.pha")
+AllData.clear()
+AllModels.clear()
+AllData("spectrum_files/observation.pha")
 spec = AllData(1)
 
 # Energy bin edges
@@ -47,5 +50,5 @@ plt.ylabel("Count rate (counts/s/keV)")
 plt.yscale("log")
 plt.xscale('log')
 plt.title("Simulated Crab Spectrum")
-plt.savefig("Crab_spectrum.png", dpi=300, bbox_inches="tight")
+plt.savefig("outputs/Crab_spectrum.png", dpi=300, bbox_inches="tight")
 plt.close()

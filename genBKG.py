@@ -5,23 +5,24 @@ from astropy.io import fits
 import matplotlib.pyplot as plt
 import numpy as np
 import subprocess
-import genRSPfile
+import genRSP
 
-exposureTime = genRSPfile.exposureTime
-background = genRSPfile.background
-rspname = genRSPfile.rspname
+exposureTime = genRSP.exposureTime
+background = genRSP.background
+rspname = genRSP.rspname
+num_det_pixels = genRSP.num_det_pixels
 
-backgroundname = background.gen_spectrum_table()
+backgroundname = background.gen_spectrum_table(output = 'spectrum_files/background.dat')
 
 #turns the ASCII file into an xspec model. 
-subprocess.run(["flx2tab", "background.dat", "bkg", "bkg.mod"])
+subprocess.run(["flx2tab", "spectrum_files/background.dat", "bkg", "bkg.mod"])
 background = Model("atable{bkg.mod}")
 
 #run xspec on the model using the response files. 
-fake = FakeitSettings(response= rspname, exposure= str(exposureTime), fileName="background.pha")
+fake = FakeitSettings(response= rspname, exposure= str(exposureTime), fileName="spectrum_files/background.pha")
 AllData.fakeit(1, fake)
 
-AllData("background.pha")
+AllData("spectrum_files/background.pha")
 spec = AllData(1)
 
 # Energy bin edges
@@ -45,5 +46,5 @@ plt.ylabel("Count rate (counts/s/keV)")
 plt.yscale("log")
 plt.xscale('log')
 plt.title("Simulated background Spectrum")
-plt.savefig("background_spectrum.png", dpi=300, bbox_inches="tight")
+plt.savefig("outputs/background_spectrum.png", dpi=300, bbox_inches="tight")
 plt.close()

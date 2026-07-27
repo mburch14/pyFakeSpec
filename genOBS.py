@@ -34,14 +34,14 @@ energy = (elow + ehigh) / 2
 with fits.open("spectrum_files/observation.pha") as hdul:
     pha = hdul["SPECTRUM"].data #type: ignore
     counts = np.array(pha["COUNTS"])
-countRate = ((counts / exposureTime) / dE) /num_det_pixels #puts the y-axis in the correct units.
+countRate = ((counts / exposureTime) / dE) #puts the y-axis in the correct units.
 
 plt.figure(figsize=(8,5))
 plt.step(energy, countRate, where="mid", color="black")
 plt.xlabel("Energy (keV)")
-plt.ylabel("Count rate (counts/s/keV)")
+plt.ylabel("simulated crab+background rate (counts/s/keV)")
 plt.yscale("log")
 plt.xscale('log')
-plt.title("Simulated Crab Spectrum")
-plt.savefig("outputs/Crab_spectrum.png", dpi=300, bbox_inches="tight")
+plt.title("Simulated Crab Spectrum with Background")
+plt.savefig("outputs/Sim_Crab_spectrum.png", dpi=300, bbox_inches="tight")
 plt.close()

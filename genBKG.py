@@ -10,7 +10,7 @@ background = genRSP.background
 rspname = genRSP.rspname
 num_det_pixels = genRSP.num_det_pixels
 
-backgroundname = background.gen_spectrum_table(output = 'spectrum_files/background.dat')
+backgroundname = background.gen_spectrum_table(output = 'spectrum_files/background.dat', albedo= False, particle= False)
 
 AllData.clear()
 AllModels.clear()
@@ -37,7 +37,7 @@ energy = (elow + ehigh) / 2
 with fits.open("spectrum_files/background.pha") as hdul:
     pha = hdul["SPECTRUM"].data #type: ignore
     counts = np.array(pha["COUNTS"])
-countRate = ((counts / exposureTime) / dE) / num_det_pixels #puts the y-axis in the correct units.
+countRate = ((counts / exposureTime) / dE) #puts the y-axis in the correct units.
 
 plt.figure(figsize=(8,5))
 plt.step(energy, countRate, where="mid", color="black")
@@ -46,5 +46,5 @@ plt.ylabel("Count rate (counts/s/keV/detector)")
 plt.yscale("log")
 plt.xscale('log')
 plt.title("Simulated background Spectrum")
-plt.savefig("outputs/background_spectrum.png", dpi=300, bbox_inches="tight")
+plt.savefig("outputs/sim_background_spectrum.png", dpi=300, bbox_inches="tight")
 plt.close()

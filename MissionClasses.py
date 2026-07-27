@@ -97,15 +97,17 @@ class BackgroundModel:
     def R_E (self, E, mc2, Z):
         energy = np.asarray(E)
         pc = np.sqrt((energy + mc2)**2 - mc2**2) #GeV
-        return pc/abs(Z) #GV
+        return pc/abs(Z) #GV4
 
-    def gen_spectrum_table(self, output="spectrum_files/background.dat"):
+    def gen_spectrum_table(self, output="spectrum_files/background.dat", albedo = False, particle = True):
         energies = self.detector.energy #Gives energy bin midpoints in keV
         energy_lo = self.detector.energy_low #Gives energy bin lower bounds in keV
         energy_hi = self.detector.energy_high #Gives energy bin upper bounds in keV
 
         #flux in units of photons/cm2/s/keV
-        fluxes = np.array(self.cxb(energies, self.detector.geos.fov_sr) + self.albedo(energies, self.detector.geos.fov_sr))
+        fluxes = np.array(self.cxb(energies, self.detector.geos.fov_sr))
+        if albedo:
+            fluxes += self.albedo(energies, self.detector.geos.fov_sr)
         table = np.column_stack((energy_lo, energy_hi, fluxes))
         np.savetxt(output, table, fmt="%.6f %.6f %.8e", comments="")
         return output

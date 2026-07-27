@@ -42,7 +42,7 @@ def main():
     plt.ylabel(r"Effective Area ($cm^2$)")
     plt.xscale('log')
     plt.title(f'effective area of {instrument}')
-    plt.savefig("outputs/EffecitveArea.png", dpi=300, bbox_inches="tight")
+    plt.savefig("outputs/EffectiveArea.png", dpi=300, bbox_inches="tight")
     plt.close()
 
 

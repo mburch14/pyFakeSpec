@@ -4,6 +4,22 @@ import numpy as np
 import genRSP as genRSP
 from astropy.io import fits
 
+params = {
+    "axes.labelsize": 15,
+    "font.size": 15,
+    "legend.fontsize": 15,
+    "xtick.labelsize": 15,
+    "ytick.labelsize": 15,
+    "font.family": "serif",
+    "xtick.minor.visible": True,
+    "ytick.minor.visible": True,
+    "xtick.top": True,
+    "ytick.right": True,
+    "xtick.direction": "in",
+    "ytick.direction": "in",
+}
+plt.rcParams.update(params)
+
 exposureTime = genRSP.exposureTime
 rspname = genRSP.rspname
 num_det_pixels = genRSP.num_det_pixels
@@ -11,13 +27,13 @@ num_det_pixels = genRSP.num_det_pixels
 AllData.clear()
 AllModels.clear()
 
-#this is the source that we are doing. This is not right. We are not considering the field of view of the simulation. We need to fix this. It should be the exact same as the background.
+#this is the source that we are doing.
 crab = Model("powerlaw")
-crab.powerlaw.PhoIndex = 2.15 #type: ignore
-crab.powerlaw.norm = 10.17 #type: ignore
+crab.PhoIndex = 2.15
+crab.norm = 10.17
 
 #run xspec on the model using the response files. 
-fake = FakeitSettings(response= rspname, exposure= exposureTime, fileName="spectrum_files/observation.pha", background = 'spectrum_files/background.pha')  #type: ignore
+fake = FakeitSettings(response= rspname, exposure= str(exposureTime), fileName="spectrum_files/observation.pha", background = 'spectrum_files/background.pha')
 AllData.fakeit(1, fake)
 
 AllData.clear()
@@ -39,7 +55,7 @@ countRate = ((counts / exposureTime) / dE) #puts the y-axis in the correct units
 plt.figure(figsize=(8,5))
 plt.step(energy, countRate, where="mid", color="black")
 plt.xlabel("Energy (keV)")
-plt.ylabel("simulated crab+background rate (counts/s/keV)")
+plt.ylabel("rate (counts/s/keV)")
 plt.yscale("log")
 plt.xscale('log')
 plt.title("Simulated Crab Spectrum with Background")

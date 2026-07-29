@@ -6,6 +6,21 @@ import matplotlib.pyplot as plt
 import numpy as np
 import subprocess
 import commentjson
+params = {
+    "axes.labelsize": 15,
+    "font.size": 15,
+    "legend.fontsize": 15,
+    "xtick.labelsize": 15,
+    "ytick.labelsize": 15,
+    "font.family": "serif",
+    "xtick.minor.visible": True,
+    "ytick.minor.visible": True,
+    "xtick.top": True,
+    "ytick.right": True,
+    "xtick.direction": "in",
+    "ytick.direction": "in",
+}
+plt.rcParams.update(params)
 
 instrument = 'SWIFTBAT'
 
@@ -15,7 +30,7 @@ chars = jsons[instrument]
 
 rspname = chars["rsp_name"]
 num_det_pixels = chars["num_det_pixels"]
-exposureTime = 300 #seconds
+exposureTime = 2655 #seconds
 
 #This is for our specific Cubesat
 orb = mc.Orbit(chars["altitide"], chars['inclination'])

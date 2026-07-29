@@ -10,6 +10,24 @@ import numpy as np
 import subprocess
 import commentjson
 import genRSP
+import MissionClasses
+params = {
+    "axes.labelsize": 15,
+    "font.size": 15,
+    "legend.fontsize": 15,
+    "xtick.labelsize": 15,
+    "ytick.labelsize": 15,
+    "font.family": "serif",
+    "xtick.minor.visible": True,
+    "ytick.minor.visible": True,
+    "xtick.top": True,
+    "ytick.right": True,
+    "xtick.direction": "in",
+    "ytick.direction": "in",
+}
+plt.rcParams.update(params)
+
+#This is for if you need to get the classes for any of the plots. You can also import from genRSP.py
 '''
 instrument = 'SWIFTBAT'
 
@@ -30,7 +48,10 @@ cztDetector = mc.czt(geometry=geo, orbit=orb, mission= mission1, optics= mask, r
 optics = mc.lead(thickness=chars["mask_thickness"])
 background = mc.BackgroundModel(detector=cztDetector)
 '''
-'''energy = np.linspace(mission1.energymin, mission1.energymax, 500)
+
+#Plot the different background components (CXB and albedo)
+'''
+energy = np.linspace(mission1.energymin, mission1.energymax, 500)
 cxb = np.array([e*e*background.cxb(e, geo.fov_sr)/geo.fov_sr for e in energy])
 albedo = np.array([e*e*background.albedo(e, geo.fov_sr)/geo.fov_sr for e in energy])
 
@@ -46,8 +67,10 @@ plt.xlabel("Energy (keV)")
 plt.ylabel(r"Energy$^2$ $\times$ $\frac{dN}{dt}$   keV$^2$(photons cm$^{-2}$ s$^{-1}$ sr$^{-1}$ keV$^{-1}$)")
 plt.title("CXB and albedo")
 plt.savefig("outputs/sampleBKG.png", dpi=300, bbox_inches="tight")
-plt.close()'''
+plt.close()
+'''
 
+#See what is in your arf file
 '''
 with fits.open("response_files/swiftbat.arf") as hdul:
     arf = hdul["SPECRESP"].data #type: ignore
@@ -63,32 +86,8 @@ plt.xscale("log")
 plt.savefig("outputs/effectiveAreatest.png", dpi=300, bbox_inches="tight")
 plt.show()
 '''
-'''with fits.open("spectrum_files/background.pha") as hdul:
-    data = hdul["SPECTRUM"].data #type: ignore
-    print(data["COUNTS"][:5])
 
-AllData.clear()
-AllModels.clear()
-
-AllData("spectrum_files/background.pha")
-spec = AllData(1)
-
-# Energy bin edges
-energies = np.array(spec.energies) #type: ignore
-elow = energies[:,0]
-ehigh = energies[:,1]
-dE = ehigh - elow
-energy = (elow + ehigh) / 2
-Plot.xAxis = "keV"
-Plot("data")
-
-counts = np.array(Plot.y())
-countRate = ((counts / 300) / dE) / 32768 #puts the y-axis in the correct units.
-
-print(counts[:5])
-print(dE[:5])
-print(countRate[:5])
-print(energies[:5])'''
+#Plot the effective area on a given range
 '''
 energy_vals = np.linspace(10, 1000, 990)
 effective_area = [genRSP.cztDetector.effective_area(energy=e) for e in energy_vals]
@@ -100,9 +99,12 @@ plt.ylabel(r"Effective Area ($cm^2$)")
 plt.xscale('log')
 plt.title(f'effective area of BAT')
 plt.savefig("outputs/EffectiveArea.png", dpi=300, bbox_inches="tight")
-plt.close()'''
+plt.close()
+'''
 
-'''with fits.open("spectrum_files/bat_justcrab.pha") as hdul:
+#This is to plot the actual SWIFT spectrum on the range from 10-200keV
+'''
+with fits.open("spectrum_files/bat_total.pha") as hdul:
     spec = hdul["SPECTRUM"].data #type: ignore
     ebounds = hdul["EBOUNDS"].data#type: ignore
     rate = np.array(spec["RATE"])
@@ -122,24 +124,24 @@ rate_plot = rate_per_keV[mask]
 plt.figure(figsize=(8,5))
 plt.step(energy_plot, rate_plot, where="mid", color="black")
 plt.xlabel("Energy (keV)")
-plt.ylabel("Count rate (counts/s/keV)")
+plt.ylabel("rate (counts/s/keV)")
 plt.xlim(10, 200)
 plt.xscale("log")
 plt.yscale("log")
-plt.title("Swift/BAT Crab Spectrum without Background")
-plt.savefig("outputs/real_justcrab_spectrum.png", dpi=300, bbox_inches="tight")
-plt.close()'''  
+plt.title("Swift/BAT Crab Spectrum with Background")
+plt.savefig("outputs/real_brabbkg_spectrum.png", dpi=300, bbox_inches="tight")
+plt.close()
+'''
+
+#This is code to output the SNR of the actual SWIFT data
+'''
 with fits.open("spectrum_files/bat_justcrab.pha") as hdul:
-    spec = hdul["SPECTRUM"].data
+    spec = hdul["SPECTRUM"].data #type: ignore
 
-rate = np.array(spec["RATE"])
-err = np.array(spec["STAT_ERR"])
+rate = spec["RATE"]
+err = spec["STAT_ERR"]
 
-snr_bins = rate / err
+snr = np.sum(rate) / np.sqrt(np.sum(err**2))
 
-source = np.sum(rate)
-error = np.sqrt(np.sum(err**2))
-
-snr = source / error
-
-print("BAT SNR =", snr)
+print(snr)
+'''

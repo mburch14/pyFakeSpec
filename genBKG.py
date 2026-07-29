@@ -4,6 +4,21 @@ import numpy as np
 import subprocess
 import genRSP
 from astropy.io import fits
+params = {
+    "axes.labelsize": 15,
+    "font.size": 15,
+    "legend.fontsize": 15,
+    "xtick.labelsize": 15,
+    "ytick.labelsize": 15,
+    "font.family": "serif",
+    "xtick.minor.visible": True,
+    "ytick.minor.visible": True,
+    "xtick.top": True,
+    "ytick.right": True,
+    "xtick.direction": "in",
+    "ytick.direction": "in",
+}
+plt.rcParams.update(params)
 
 exposureTime = genRSP.exposureTime
 background = genRSP.background
@@ -25,9 +40,9 @@ AllData.fakeit(1, fake)
 
 AllData.clear()
 AllData("spectrum_files/background.pha")
-spec = AllData(1)
 
 # Energy bin edges
+spec = AllData(1)
 energies = np.array(spec.energies) #type: ignore
 elow = energies[:,0]
 ehigh = energies[:,1]
@@ -37,7 +52,7 @@ energy = (elow + ehigh) / 2
 with fits.open("spectrum_files/background.pha") as hdul:
     pha = hdul["SPECTRUM"].data #type: ignore
     counts = np.array(pha["COUNTS"])
-countRate = ((counts / exposureTime) / dE) #puts the y-axis in the correct units.
+countRate = ((counts / exposureTime) / dE)/num_det_pixels #puts the y-axis in the correct units.
 
 plt.figure(figsize=(8,5))
 plt.step(energy, countRate, where="mid", color="black")

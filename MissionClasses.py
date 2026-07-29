@@ -105,7 +105,7 @@ class BackgroundModel:
         energy_hi = self.detector.energy_high #Gives energy bin upper bounds in keV
 
         #flux in units of photons/cm2/s/keV
-        fluxes = np.array(self.cxb(energies, self.detector.geos.fov_sr))
+        fluxes = 1.25* np.array(self.cxb(energies, self.detector.geos.fov_sr))
         if albedo:
             fluxes += self.albedo(energies, self.detector.geos.fov_sr)
         table = np.column_stack((energy_lo, energy_hi, fluxes))

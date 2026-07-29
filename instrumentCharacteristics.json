@@ -15,7 +15,7 @@
         "height": 2000},//cm
     "spec_resolution": 7000,//eV
     "spec_gradient": 0,// eV/keV
-    "mask_thickness": 5, //mm
+    "mask_thickness": 1, //mm
     "num_det_pixels": 32768,// the number of singular detector pixels that make up the BAT detector
     "arf_name": "response_files/swiftbat.arf",
     "rsp_name": "response_files/swiftbat.rsp"},

@@ -37,7 +37,7 @@ orb = mc.Orbit(chars["altitide"], chars['inclination'])
 geo = mc.geometry(chars['config']) #can also input chars['config']. I did not want to do that.
 mission1 = mc.Mission(instrument, chars['e_min'], chars['e_max'])
 mask = mc.lead(chars['mask_thickness'])
-cztDetector = mc.czt(geometry=geo, orbit=orb, mission= mission1, optics= mask, res= chars["spec_resolution"], grad=chars["spec_gradient"])
+cztDetector = mc.czt(geometry=geo, orbit=orb, mission= mission1, optics= mask, res= chars["spec_resolution"], grad=chars["spec_gradient"], low_ecut=chars{"low_ecut"})
 optics = mc.lead(thickness=chars["mask_thickness"])
 background = mc.BackgroundModel(detector=cztDetector)
 

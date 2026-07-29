@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import subprocess
 import commentjson
-import genRSP
+import xraydb
 import MissionClasses
 params = {
     "axes.labelsize": 15,
@@ -28,7 +28,7 @@ params = {
 plt.rcParams.update(params)
 
 #This is for if you need to get the classes for any of the plots. You can also import from genRSP.py
-'''
+
 instrument = 'SWIFTBAT'
 
 with open("instrumentCharacteristics.json") as f:
@@ -44,10 +44,10 @@ orb = mc.Orbit(chars["altitide"], chars['inclination'])
 geo = mc.geometry(chars['config']) #can also input chars['config']. I did not want to do that.
 mission1 = mc.Mission(instrument, chars['e_min'], chars['e_max'])
 mask = mc.lead(chars['mask_thickness'])
-cztDetector = mc.czt(geometry=geo, orbit=orb, mission= mission1, optics= mask, res= chars["spec_resolution"], grad=chars["spec_gradient"])
+cztDetector = mc.czt(geometry=geo, orbit=orb, mission= mission1, optics= mask, res= chars["spec_resolution"], grad=chars["spec_gradient"], low_ecut=chars["low_ecut"])
 optics = mc.lead(thickness=chars["mask_thickness"])
 background = mc.BackgroundModel(detector=cztDetector)
-'''
+
 
 #Plot the different background components (CXB and albedo)
 '''
@@ -88,19 +88,48 @@ plt.show()
 '''
 
 #Plot the effective area on a given range
-'''
-energy_vals = np.linspace(10, 1000, 990)
-effective_area = [genRSP.cztDetector.effective_area(energy=e) for e in energy_vals]
 
-plt.figure(figsize=(8,5))
-plt.plot(energy_vals, effective_area, color="black")
-plt.xlabel("Energy (keV)")
-plt.ylabel(r"Effective Area ($cm^2$)")
-plt.xscale('log')
-plt.title(f'effective area of BAT')
+w_Cd = 0.425
+w_Zn = 0.028
+w_Te = 0.547
+density = 5.78 #g/cm^3
+
+energy_vals = np.linspace(10, 1000, 990)
+
+atten_const = np.array([(w_Cd * xraydb.mu_elam('Cd', e*1000) + w_Zn * xraydb.mu_elam('Zn', e*1000) + w_Te * xraydb.mu_elam('Te', e*1000))*density for e in energy_vals])
+det_abs = (1-np.exp(-atten_const * geo.detthickness * 0.1)) #The 0.1 is to convert from mm to cm, since the thickness is in mm and the attenuation constant is in cm^-1.
+
+
+effective_area = [cztDetector.effective_area(energy=e) for e in energy_vals]
+optic_trans = [optics.transmission(e) for e in energy_vals]
+
+fig, ax1 = plt.subplots(figsize=(8, 5))
+
+# Left y-axis: Effective area
+ax1.plot(energy_vals, effective_area, color="black", linewidth=2, label="Effective Area")
+ax1.set_xlabel("Energy (keV)")
+ax1.set_ylabel(r"Effective Area ($cm^2$)", color="black")
+ax1.tick_params(axis='y', labelcolor='black')
+ax1.set_xscale("log")
+
+# Right y-axis: Transmission/Absorption
+ax2 = ax1.twinx()
+ax2.plot(energy_vals, det_abs * 100,color="tab:blue", linestyle="--", label="Detector Absorption")
+ax2.plot(energy_vals, np.array(optic_trans) * 100, color="tab:red", linestyle="-.", label="Optics Transmission")
+ax2.set_ylabel("Efficiency (%)")
+ax2.set_ylim(0, 100)
+ax2.tick_params(axis='y')
+
+# Combine legends from both axes
+lines = ax1.get_lines() + ax2.get_lines()
+labels = [line.get_label() for line in lines]
+ax1.legend(lines, labels, loc="best")
+
+plt.title("BAT Effective Area and Efficiencies")
+plt.tight_layout()
 plt.savefig("outputs/EffectiveArea.png", dpi=300, bbox_inches="tight")
-plt.close()
-'''
+plt.show()
+
 
 #This is to plot the actual SWIFT spectrum on the range from 10-200keV
 '''
@@ -136,12 +165,23 @@ plt.close()
 #This is code to output the SNR of the actual SWIFT data
 '''
 with fits.open("spectrum_files/bat_justcrab.pha") as hdul:
-    spec = hdul["SPECTRUM"].data #type: ignore
+    spectru = hdul["SPECTRUM"]
+    spec = spectru.data
+
+    exposure = spectru.header["EXPOSURE"]
+    rspfile = spectru.header["RESPFILE"]
+    arffile = spectru.header["ANCRFILE"]
 
 rate = spec["RATE"]
 err = spec["STAT_ERR"]
 
 snr = np.sum(rate) / np.sqrt(np.sum(err**2))
 
-print(snr)
+print("SNR: ",snr)
+#print(spec.columns)
+#print(rate.shape)
+print("Rate: ", np.sum(rate))
+print("stdv", np.sqrt(np.sum(err**2)))
+print("exposure: ",exposure)
+print("counts: " ,np.sum(rate)*exposure)
 '''

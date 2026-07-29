@@ -7,4 +7,4 @@ bkg = fits.getdata("spectrum_files/observation_bkg.pha", 1)["COUNTS"].sum() #typ
 print("Source counts:", obs-bkg)
 print("Background counts:", bkg)
 
-print('SNR:', (obs-bkg)/np.sqrt(obs+bkg))
+print('SNR:', (obs-bkg)/np.sqrt(bkg))

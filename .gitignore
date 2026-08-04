@@ -17,3 +17,4 @@ __pycache__/
 *.dat
 *.html
 *.fits
+*.img

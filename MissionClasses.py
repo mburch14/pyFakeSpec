@@ -19,7 +19,7 @@ class Mission:
 
 class Orbit:
 
-    def __init__(self, altitude, inclination=0):
+    def __init__(self, altitude, inclination):
         self.earthradius = 6378.137  # km
         self.altitude = altitude #km
         self.inclination = inclination #degrees
@@ -43,7 +43,8 @@ class geometry:
     "imagTransmission": 0.5,#percentage of mask covered up
     "length": 1200,#cm
     "width": 2400,#cm
-    "height":2000}#cm
+    "height":2000, #cm
+    "partial_coded": False}#cm
 
     def __init__(self, config=None):
         config = config or {} #either use the provided config or an empty dict if none is provided
@@ -63,10 +64,20 @@ class geometry:
         self.l = settings["length"]
         self.w = settings["width"]
         self.h = settings["height"]
+        self.collimator = settings["collimator"] #True if the cubesat is using a collimator, False if it is using a mask. If it is using a collimator, the field of view will be calculated using the formula for the solid angle of a rectangle with the dimensions of the mask, rather than the dimensions of the detector.
 
-        #wfov is the field of view in the width direction; lfov is the field of view in the length direction
-        self.wfov = 2*math.atan((self.w -self.detw) / (2*(self.detsep))) #in radians
-        self.lfov = 2*math.atan((self.l -self.detl) / (2*(self.detsep))) #in radians
+        if self.collimator:
+            #wfov is the field of view in the width direction; lfov is the field of view in the length direction
+            self.coll = settings["coll"] #cm, collimator length
+            self.colw = settings["colw"] #cm, collimator width
+            self.colh = settings["colh"] #cm, collimator height
+            self.wfov = 2*math.atan(self.colw / (2*self.colh)) #in radians
+            self.lfov = 2*math.atan(self.coll / (2*self.colh)) #in radians
+
+        else:
+            #wfov is the field of view in the width direction; lfov is the field of view in the length direction
+            self.wfov = 2*math.atan((self.w -self.detw) / (2*(self.detsep))) #in radians
+            self.lfov = 2*math.atan((self.l -self.detl) / (2*(self.detsep))) #in radians
 
         #total field of view in steradians, calculated using the formula for the solid angle of a rectangle
         self.fov_sr = 4 * np.arcsin(np.sin(self.wfov / 2) * np.sin(self.lfov / 2))
@@ -75,7 +86,7 @@ class geometry:
         self.collecting_area = self.imagTransmission * self.detl * self.detw
 
     def __str__(self):
-        return f"This is a {(self.l* self.w* self.h)/1000}U cubesat with a {round(self.wfov, 2)} by {round(self.lfov, 2)} radian field of view and {self.imagTransmission*100}% transmission."
+        return f"This is a {(self.l* self.w* self.h)/1000}U cubesat with a {round(np.rad2deg(self.wfov), 2)} by {round(np.rad2deg(self.lfov), 2)} degree field of view and {self.imagTransmission*100}% transmission."
 
 
 class BackgroundModel:
@@ -251,7 +262,7 @@ class detector(ABC):
 
 
 class czt(detector):
-    def __init__(self, geometry, orbit, mission, optics, res = 4.07e3, grad = 0.035, low_ecut = 15):
+    def __init__(self, geometry, orbit, mission, optics, res, grad, low_ecut):
         super().__init__(geometry, orbit, mission, optics)
         self.res = res
         self.grad = grad
@@ -261,28 +272,32 @@ class czt(detector):
 
         #Add in the likelihood that some photons may be transmitted through the mask.
         acoll = self.geos.collecting_area
+
+        coding_eff = 1
+
+        #Energy in kev. xraydb.mu_elam takes energy in eV, so we multiply by 1000 to convert from keV to eV.
+        atten_const = xraydb.material_mu("Cd0.9Zn0.1Te",energy * 1000, density=5.78)
+        tdet = 1-np.exp(-atten_const * self.geos.detthickness * 0.1) #The 0.1 is to convert from mm to cm, since the thickness is in mm and the attenuation constant is in cm^-1.
+
         if self.optics.mask:
-            acoll += self.optics.transmission(energy) * (1 - self.geos.imagTransmission) * self.geos.detl * self.geos.detw
+            f = self.geos.imagTransmission
+            tmask = self.optics.transmission(energy)
+            acoll += tmask *(1- f)*self.geos.detl*self.geos.detw
+
+            Tmean = f * 1 + (1 - f) * tmask
+            varience = f*(1 -Tmean)**2 + (1 -f)*(tmask- Tmean)**2
+            coding_eff = np.sqrt(varience)
+
         
         #soft energy cutoff
         fwhm_at_ecut = ((self.low_ecut-1)*self.grad + self.res)/1000
         sigma = fwhm_at_ecut / (2*np.sqrt(2*np.log(2)))
         weight = 0.5 * (1 + erf((energy-self.low_ecut) / (np.sqrt(2)*sigma)))
 
-        #mass fractions of Cd, Zn, and Te in CdZnTe
-        w_Cd = 0.425
-        w_Zn = 0.028
-        w_Te = 0.547
-
-        #density of CdZnTe is 5.78 g/cm^3. (NIST XCOM)
-        density = 5.78 #g/cm^3
-
-        #Energy in kev. xraydb.mu_elam takes energy in eV, so we multiply by 1000 to convert from keV to eV.
-        atten_const = (w_Cd * xraydb.mu_elam('Cd', energy*1000) + w_Zn * xraydb.mu_elam('Zn', energy*1000) + w_Te * xraydb.mu_elam('Te', energy*1000))*density
-        return weight * acoll * (1-np.exp(-atten_const * self.geos.detthickness * 0.1)) #The 0.1 is to convert from mm to cm, since the thickness is in mm and the attenuation constant is in cm^-1.
+        return coding_eff * weight * acoll * tdet
 
 class silicon (detector):
-    def __init__(self, geometry, orbit, mission, optics, res = 120, grad = 0):
+    def __init__(self, geometry, orbit, mission, optics, res, grad):
         super().__init__(geometry, orbit, mission, optics)
         self.res = res
         self.grad = grad
@@ -330,4 +345,13 @@ class tungsten(optics):
     def transmission(self, energy):
         density = 19.25   # g/cm3
         atten_const = xraydb.mu_elam('W', energy*1000)*density #Energy in kev. xraydb.mu_elam takes energy in eV, so we multiply by 1000 to convert from keV to eV.
+        return np.exp(-atten_const * self.thickness * 0.1) #The 0.1 is to convert from mm to cm, since the thickness is in mm and the attenuation constant is in cm^-1.
+
+class tantalum(optics):
+    def __init__(self, thickness, mask= True):
+        super().__init__(thickness, mask)
+
+    def transmission(self, energy):
+        density = 19.25   # g/cm3
+        atten_const = xraydb.mu_elam('Ta', energy*1000)*density #Energy in kev. xraydb.mu_elam takes energy in eV, so we multiply by 1000 to convert from keV to eV.
         return np.exp(-atten_const * self.thickness * 0.1) #The 0.1 is to convert from mm to cm, since the thickness is in mm and the attenuation constant is in cm^-1.

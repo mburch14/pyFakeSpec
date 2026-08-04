@@ -29,8 +29,8 @@ AllModels.clear()
 
 #this is the source that we are doing.
 crab = Model("powerlaw")
-crab.PhoIndex = 2.15
-crab.norm = 10.17
+crab.powerlaw.PhoIndex = 2.15
+crab.powerlaw.norm = 10.17
 
 #run xspec on the model using the response files. 
 fake = FakeitSettings(response= rspname, exposure= str(exposureTime), fileName="spectrum_files/observation.pha", background = 'spectrum_files/background.pha')
@@ -58,6 +58,8 @@ plt.xlabel("Energy (keV)")
 plt.ylabel("rate (counts/s/keV)")
 plt.yscale("log")
 plt.xscale('log')
+plt.xlim((15, 200))
+plt.ylim((10**-1, 5*10**2))
 plt.title("Simulated Crab Spectrum with Background")
 plt.savefig("outputs/Sim_Crab_spectrum.png", dpi=300, bbox_inches="tight")
 plt.close()

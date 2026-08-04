@@ -15,3 +15,5 @@ __pycache__/
 *.pha
 *.mod
 *.dat
+*.html
+*.fits

@@ -30,15 +30,14 @@ chars = jsons[instrument]
 
 rspname = chars["rsp_name"]
 num_det_pixels = chars["num_det_pixels"]
-exposureTime = 2655 #seconds
+exposureTime = 300 #seconds
 
 #This is for our specific Cubesat
-orb = mc.Orbit(chars["altitide"], chars['inclination'])
-geo = mc.geometry(chars['config']) #can also input chars['config']. I did not want to do that.
+orb = mc.Orbit(chars["altitude"], chars['inclination'])
+geo = mc.geometry(chars['config'])
 mission1 = mc.Mission(instrument, chars['e_min'], chars['e_max'])
 mask = mc.lead(chars['mask_thickness'])
-cztDetector = mc.czt(geometry=geo, orbit=orb, mission= mission1, optics= mask, res= chars["spec_resolution"], grad=chars["spec_gradient"], low_ecut=chars{"low_ecut"})
-optics = mc.lead(thickness=chars["mask_thickness"])
+cztDetector = mc.czt(geometry=geo, orbit=orb, mission=mission1, optics=mask, res=chars["spec_resolution"], grad=chars["spec_gradient"], low_ecut=chars["low_ecut"])
 background = mc.BackgroundModel(detector=cztDetector)
 
 def main():

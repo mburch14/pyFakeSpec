@@ -2,17 +2,12 @@
 requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
-
 [project]
 name = "pysimsat"
 version = "1.0"
-description = "Simulation tools for generating X-ray instrument response files and fake spectra"
+description = "Simulation tools for X-ray instrument response and spectra"
 readme = "README.md"
 requires-python = ">=3.10"
-
-authors = [
-    {name = "Your Name"}
-]
 
 dependencies = [
     "numpy",
@@ -21,10 +16,8 @@ dependencies = [
     "commentjson",
 ]
 
-
 [tool.setuptools.packages.find]
 where = ["src"]
-
 
 [tool.setuptools]
 package-dir = {"" = "src"}

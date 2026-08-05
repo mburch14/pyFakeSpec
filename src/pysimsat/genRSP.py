@@ -1,5 +1,5 @@
 from xspec import *
-import pysimsat.pysimsat.MissionClasses as mc
+import pysimsat.src.pysimsat.MissionClasses as mc
 import matplotlib.pyplot as plt
 import numpy as np
 import commentjson

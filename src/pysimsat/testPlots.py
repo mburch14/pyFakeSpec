@@ -1,16 +1,13 @@
-from . import MissionClasses as mc
 import matplotlib.pyplot as plt
 import numpy as np
 from xspec import *
-import pysimsat.src.pysimsat.MissionClasses as mc
-import requests
 from astropy.io import fits
 import matplotlib.pyplot as plt
 import numpy as np
 import subprocess
 import commentjson
 import xraydb
-import pysimsat.src.pysimsat.MissionClasses as MissionClasses
+
 params = {
     "axes.labelsize": 15,
     "font.size": 15,

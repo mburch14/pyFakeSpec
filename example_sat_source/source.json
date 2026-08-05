@@ -1,0 +1,9 @@
+{
+"CRAB-SWIFTBAT": {
+    "name": "Crab",
+    "exposure": 300, //sec
+    "specShape": "powerlaw",
+    "normalization": 10.17,
+    "phoIndex": 2.15
+}
+}

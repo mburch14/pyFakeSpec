@@ -1,0 +1,69 @@
+from xspec import *
+import matplotlib.pyplot as plt
+import numpy as np
+import subprocess
+from astropy.io import fits
+
+params = {
+    "axes.labelsize": 15,
+    "font.size": 15,
+    "legend.fontsize": 15,
+    "xtick.labelsize": 15,
+    "ytick.labelsize": 15,
+    "font.family": "serif",
+    "xtick.minor.visible": True,
+    "ytick.minor.visible": True,
+    "xtick.top": True,
+    "ytick.right": True,
+    "xtick.direction": "in",
+    "ytick.direction": "in",
+}
+plt.rcParams.update(params)
+
+def generate_background_spectrum(background, rspname, exposureTime, spec_dir, albedo = True, particle = True):
+
+    backgroundname = background.gen_spectrum_table(output = f'{spec_dir}/background.dat', albedo= albedo, particle= particle)
+
+    #turns the ASCII file into an xspec model. 
+    subprocess.run(["flx2tab", backgroundname, "bkg", "bkg.mod"])
+    background = Model("atable{bkg.mod}")
+
+    AllData.clear()
+    AllModels.clear()
+
+    #run xspec on the model using the response files. 
+    fake = FakeitSettings(response= rspname, exposure= str(exposureTime), fileName=f"{spec_dir}/background.pha")
+    AllData.fakeit(1, fake)
+
+
+def plot_background_spectrum(num_det_pixels, exposureTime, output_dir, spec_dir):
+
+    AllData.clear()
+    AllData(f"{spec_dir}/background.pha")
+    # Energy bin edges
+    spec = AllData(1)
+    energies = np.array(spec.energies) #type: ignore
+    elow = energies[:,0]
+    ehigh = energies[:,1]
+    dE = ehigh - elow
+    energy = (elow + ehigh) / 2
+
+    with fits.open(f"{spec_dir}/background.pha") as hdul:
+        pha = hdul["SPECTRUM"].data #type: ignore
+        counts = np.array(pha["COUNTS"])
+    countRate = ((counts / exposureTime) / dE)/num_det_pixels #puts the y-axis in the correct units.
+
+    plt.figure(figsize=(8,5))
+    plt.step(energy, countRate, where="mid", color="black")
+    plt.xlabel("Energy (keV)")
+    plt.ylabel("Count rate (counts/s/keV/detector)")
+    plt.yscale("log")
+    plt.xscale('log')
+    plt.title("Simulated background Spectrum")
+    plt.savefig(f"{output_dir}/sim_background_spectrum.png", dpi=300, bbox_inches="tight")
+    plt.close()
+
+
+def gen_background(background, rspname, exposureTime, num_det_pixels, output_dir, spec_dir):
+    generate_background_spectrum(background, rspname, exposureTime, spec_dir)
+    plot_background_spectrum(num_det_pixels, exposureTime, output_dir, spec_dir)

@@ -1,5 +1,5 @@
 from xspec import *
-import pysimsat.src.pysimsat.MissionClasses as mc
+from . import MissionClasses as mc
 import matplotlib.pyplot as plt
 import numpy as np
 import commentjson
@@ -70,10 +70,10 @@ def main(geo, mission, detector, output_dir, resp_dir):
     plt.savefig(f"{output_dir}/EffectiveArea.png", dpi=300, bbox_inches="tight")
     plt.close()
 
-def gen_rsp(instrument,source, instrument_json, source_file, output_dir, resp_dir):
+def gen_rsp(instrument, source, instrument_json, source_file, output_dir, resp_dir):
     chars = load_instrument(instrument, instrument_json)
     sourcechars = load_source(source, source_file)
-    
     orb, geo, mission, detector, background, mask = build_instrument(chars, instrument)
-
     main(geo, mission, detector, output_dir, resp_dir)
+
+    return chars, sourcechars, background, mission

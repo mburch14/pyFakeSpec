@@ -2,6 +2,7 @@ from xspec import *
 import matplotlib.pyplot as plt
 import numpy as np
 from astropy.io import fits
+import os
 
 params = {
     "axes.labelsize": 15,
@@ -20,7 +21,14 @@ params = {
 plt.rcParams.update(params)
 
 
-def generate_observation_spectrum(sourcechars, rspname, exposureTime, spec_dir):
+def generate_observation_spectrum(mission, sourcechars, spec_dir, resp_dir):
+
+
+    #remove existing observation spectrum if it exists.
+    if os.path.exists(f"{spec_dir}/observation.pha"):
+        os.remove(f"{spec_dir}/observation.pha")
+    if os.path.exists(f"{spec_dir}/observation_bkg.pha"):
+        os.remove(f"{spec_dir}/observation_bkg.pha")
 
     AllData.clear()
     AllModels.clear()
@@ -31,7 +39,7 @@ def generate_observation_spectrum(sourcechars, rspname, exposureTime, spec_dir):
     sourcemodel.powerlaw.norm = sourcechars["normalization"] #type: ignore
 
     #run xspec on the model using the response files. 
-    fake = FakeitSettings(response= rspname, exposure= str(exposureTime), fileName=f"{spec_dir}/observation.pha", background = f"{spec_dir}/background.pha")
+    fake = FakeitSettings(response= f"{resp_dir}/{mission.name}.rsp", exposure= sourcechars["exposure"], fileName=f"{spec_dir}/observation.pha", background = f"{spec_dir}/background.pha")
     AllData.fakeit(1, fake)
 
 
@@ -72,7 +80,7 @@ def calculate_snr(spec_dir):
     print('SNR:', (obs-bkg)/np.sqrt(bkg))
 
 
-def gen_observation(sourcechars, rspname, output_dir, spec_dir):
-    generate_observation_spectrum(sourcechars, rspname, sourcechars["exposure"], spec_dir)
+def gen_observation(mission, sourcechars, output_dir, spec_dir, resp_dir):
+    generate_observation_spectrum(mission, sourcechars, spec_dir, resp_dir)
     plot_observation_spectrum(sourcechars["name"], sourcechars["exposure"], output_dir, spec_dir)
     calculate_snr(spec_dir)

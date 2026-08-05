@@ -1,4 +1,4 @@
-import pysimsat.src.pysimsat.MissionClasses as mc
+from . import MissionClasses as mc
 import matplotlib.pyplot as plt
 import numpy as np
 from xspec import *

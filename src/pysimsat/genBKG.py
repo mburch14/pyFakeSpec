@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import subprocess
 from astropy.io import fits
+import os
 
 params = {
     "axes.labelsize": 15,
@@ -20,19 +21,31 @@ params = {
 }
 plt.rcParams.update(params)
 
-def generate_background_spectrum(background, rspname, exposureTime, spec_dir, albedo = True, particle = True):
+def generate_background_spectrum(background, mission, exposureTime, spec_dir, resp_dir, albedo = True, particle = True):
+
+
+    #remove existing background models if they exist.
+    for f in ["bkg.mod", "bkg.mod.gz"]:
+        if os.path.exists(f):
+            os.remove(f)
+
+    #remove existing background spectrum if it exists.
+    if os.path.exists(f"{spec_dir}/background.pha"):
+        os.remove(f"{spec_dir}/background.pha")
+    if os.path.exists(f"{spec_dir}/background.dat"):
+        os.remove(f"{spec_dir}/background.dat")
 
     backgroundname = background.gen_spectrum_table(output = f'{spec_dir}/background.dat', albedo= albedo, particle= particle)
 
     #turns the ASCII file into an xspec model. 
-    subprocess.run(["flx2tab", backgroundname, "bkg", "bkg.mod"])
+    subprocess.run(["flx2tab", backgroundname, "bkg", "bkg.mod"], check = True)
     background = Model("atable{bkg.mod}")
 
     AllData.clear()
     AllModels.clear()
 
     #run xspec on the model using the response files. 
-    fake = FakeitSettings(response= rspname, exposure= str(exposureTime), fileName=f"{spec_dir}/background.pha")
+    fake = FakeitSettings(response= f"{resp_dir}/{mission.name}.rsp", exposure= str(exposureTime), fileName=f"{spec_dir}/background.pha")
     AllData.fakeit(1, fake)
 
 
@@ -64,6 +77,6 @@ def plot_background_spectrum(num_det_pixels, exposureTime, output_dir, spec_dir)
     plt.close()
 
 
-def gen_background(background, rspname, exposureTime, num_det_pixels, output_dir, spec_dir):
-    generate_background_spectrum(background, rspname, exposureTime, spec_dir)
+def gen_background(background, mission, exposureTime, num_det_pixels, output_dir, spec_dir, resp_dir):
+    generate_background_spectrum(background, mission, exposureTime, spec_dir, resp_dir)
     plot_background_spectrum(num_det_pixels, exposureTime, output_dir, spec_dir)

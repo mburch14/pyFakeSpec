@@ -37,12 +37,12 @@ def generate_background_spectrum(background, mission, exposureTime, spec_dir, re
 
     backgroundname = background.gen_spectrum_table(output = f'{spec_dir}/background.dat', albedo= albedo, particle= particle)
 
-    #turns the ASCII file into an xspec model. 
-    subprocess.run(["flx2tab", backgroundname, "bkg", "bkg.mod"], check = True)
-    background = Model("atable{bkg.mod}")
-
     AllData.clear()
     AllModels.clear()
+
+    #turns the ASCII file into an xspec model. 
+    subprocess.run(["flx2tab", backgroundname, "bkg", "bkg.mod"], check = True)
+    bkg_model = Model("atable{bkg.mod}")
 
     #run xspec on the model using the response files. 
     fake = FakeitSettings(response= f"{resp_dir}/{mission.name}.rsp", exposure= str(exposureTime), fileName=f"{spec_dir}/background.pha")

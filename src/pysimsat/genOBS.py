@@ -34,7 +34,7 @@ def generate_observation_spectrum(mission, sourcechars, spec_dir, resp_dir):
     AllModels.clear()
 
     #this is the source that we are doing.
-    sourcemodel = Model(sourcechars["model"])
+    sourcemodel = Model(sourcechars["sourceShape"])
     sourcemodel.powerlaw.PhoIndex = sourcechars["phoIndex"] #type: ignore
     sourcemodel.powerlaw.norm = sourcechars["normalization"] #type: ignore
 

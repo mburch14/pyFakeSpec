@@ -1,10 +1,10 @@
 import math
-from matplotlib.pylab import det
 import numpy as np
 from astropy.io import fits
 import xraydb
 import subprocess
 from scipy.special import erf
+from pathlib import Path
 
 class Mission:
 
@@ -228,8 +228,8 @@ class detector():
 
         if self.optics.focusing:
             Tmean = f * 1 + (1 - f) * tmask
-            varience = f*(1 -Tmean)**2 + (1 -f)*(tmask- Tmean)**2
-            coding_eff = np.sqrt(varience)
+            variance = f*(1 -Tmean)**2 + (1 -f)*(tmask- Tmean)**2
+            coding_eff = np.sqrt(variance)
 
         
         #soft energy cutoff
@@ -285,7 +285,7 @@ class detector():
             "--rspfile", rsp, #The name of the output RMF file
             "--range", f"{self.missions.energymin}:{self.missions.energymax}",
             "--overwrite"
-        ], check=True)
+        ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,) #stdout is the normal output, stderr is the error output. We are redirecting both to DEVNULL to suppress the output of the command.
 
 
 class optics():

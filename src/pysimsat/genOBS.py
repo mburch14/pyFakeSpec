@@ -3,6 +3,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 from astropy.io import fits
 import os
+from pathlib import Path
+from xspec import Xset
+
+Xset.chatter = 5
 
 params = {
     "axes.labelsize": 15,
@@ -23,12 +27,14 @@ plt.rcParams.update(params)
 
 def generate_observation_spectrum(mission, sourcechars, spec_dir, resp_dir):
 
+    obs_pha_path = spec_dir / "observation.pha"
+    obs_bkg_pha_path = spec_dir / "observation_bkg.pha"
 
     #remove existing observation spectrum if it exists.
-    if os.path.exists(f"{spec_dir}/observation.pha"):
-        os.remove(f"{spec_dir}/observation.pha")
-    if os.path.exists(f"{spec_dir}/observation_bkg.pha"):
-        os.remove(f"{spec_dir}/observation_bkg.pha")
+    if obs_pha_path.exists():
+        obs_pha_path.unlink()
+    if obs_bkg_pha_path.exists():
+        obs_bkg_pha_path.unlink()
 
     AllData.clear()
     AllModels.clear()
@@ -39,13 +45,13 @@ def generate_observation_spectrum(mission, sourcechars, spec_dir, resp_dir):
     sourcemodel.powerlaw.norm = sourcechars["normalization"] #type: ignore
 
     #run xspec on the model using the response files. 
-    fake = FakeitSettings(response= f"{resp_dir}/{mission.name}.rsp", exposure= sourcechars["exposure"], fileName=f"{spec_dir}/observation.pha", background = f"{spec_dir}/background.pha")
+    fake = FakeitSettings(response= str(resp_dir / f"{mission.name}.rsp"), exposure= str(sourcechars["exposure"]), fileName=str(spec_dir / "observation.pha"), background = str(spec_dir / "background.pha"))
     AllData.fakeit(1, fake)
 
 
 def plot_observation_spectrum(sourcename, exposureTime, output_dir, spec_dir):
     AllData.clear()
-    AllData(f"{spec_dir}/observation.pha")
+    AllData(str(spec_dir / "observation.pha"))
     spec = AllData(1)
 
     # Energy bin edges
@@ -55,7 +61,7 @@ def plot_observation_spectrum(sourcename, exposureTime, output_dir, spec_dir):
     dE = ehigh - elow
     energy = (elow + ehigh) / 2
 
-    with fits.open(f"{spec_dir}/observation.pha") as hdul:
+    with fits.open(spec_dir / "observation.pha") as hdul:
         pha = hdul["SPECTRUM"].data #type: ignore
         counts = np.array(pha["COUNTS"])
     countRate = ((counts / exposureTime) / dE) #puts the y-axis in the correct units.
@@ -67,13 +73,13 @@ def plot_observation_spectrum(sourcename, exposureTime, output_dir, spec_dir):
     plt.yscale("log")
     plt.xscale('log')
     plt.title(f"Simulated {sourcename} Spectrum with Background")
-    plt.savefig(f"{output_dir}/Sim_{sourcename}_spectrum.png", dpi=300, bbox_inches="tight")
+    plt.savefig(output_dir / f"Sim_{sourcename}_spectrum.png", dpi=300, bbox_inches="tight")
     plt.close()
     
 
 def calculate_snr(spec_dir):
-    obs = fits.getdata(f"{spec_dir}/observation.pha", 1)["COUNTS"].sum() #type: ignore
-    bkg = fits.getdata(f"{spec_dir}/observation_bkg.pha", 1)["COUNTS"].sum() #type: ignore
+    obs = fits.getdata(spec_dir / "observation.pha", 1)["COUNTS"].sum() #type: ignore
+    bkg = fits.getdata(spec_dir / "observation_bkg.pha", 1)["COUNTS"].sum() #type: ignore
 
     print("Source counts:", obs-bkg)
     print("Background counts:", bkg)

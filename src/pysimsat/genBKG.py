@@ -4,6 +4,10 @@ import numpy as np
 import subprocess
 from astropy.io import fits
 import os
+from pathlib import Path
+from xspec import Xset
+
+Xset.chatter = 5
 
 params = {
     "axes.labelsize": 15,
@@ -24,17 +28,21 @@ plt.rcParams.update(params)
 def generate_background_spectrum(background, mission, sourcechars, spec_dir, resp_dir):
 
     #remove existing background models if they exist.
-    for f in ["bkg.mod", "bkg.mod.gz"]:
-        if os.path.exists(f):
-            os.remove(f)
+    for file in ["bkg.mod", "bkg.mod.gz"]:
+        path = Path(file)
+        if path.exists():
+            path.unlink()
+
+    back_pha_path = spec_dir / "background.pha"
+    back_dat_path = spec_dir / "background.dat"
 
     #remove existing background spectrum if it exists.
-    if os.path.exists(f"{spec_dir}/background.pha"):
-        os.remove(f"{spec_dir}/background.pha")
-    if os.path.exists(f"{spec_dir}/background.dat"):
-        os.remove(f"{spec_dir}/background.dat")
+    if back_pha_path.exists():
+        back_pha_path.unlink()
+    if back_dat_path.exists():
+        back_dat_path.unlink()
 
-    backgroundname = background.gen_spectrum_table(output = f'{spec_dir}/background.dat', cxb = sourcechars["cxb"], albedo= sourcechars["albedo"], particle= sourcechars["particle"])
+    backgroundname = background.gen_spectrum_table(output = spec_dir / 'background.dat', cxb = sourcechars["cxb"], albedo= sourcechars["albedo"], particle= sourcechars["particle"])
 
     AllData.clear()
     AllModels.clear()
@@ -44,14 +52,14 @@ def generate_background_spectrum(background, mission, sourcechars, spec_dir, res
     bkg_model = Model("atable{bkg.mod}")
 
     #run xspec on the model using the response files. 
-    fake = FakeitSettings(response = f"{resp_dir}/{mission.name}.rsp", exposure = str(sourcechars["exposure"]), fileName = f"{spec_dir}/background.pha")
+    fake = FakeitSettings(response = str(resp_dir / f"{mission.name}.rsp"), exposure = str(sourcechars["exposure"]), fileName = str(spec_dir / "background.pha"))
     AllData.fakeit(1, fake)
 
 
 def plot_background_spectrum(num_det_pixels, exposureTime, output_dir, spec_dir):
 
     AllData.clear()
-    AllData(f"{spec_dir}/background.pha")
+    AllData(str(spec_dir / "background.pha"))
     # Energy bin edges
     spec = AllData(1)
     energies = np.array(spec.energies) #type: ignore
@@ -60,7 +68,7 @@ def plot_background_spectrum(num_det_pixels, exposureTime, output_dir, spec_dir)
     dE = ehigh - elow
     energy = (elow + ehigh) / 2
 
-    with fits.open(f"{spec_dir}/background.pha") as hdul:
+    with fits.open(spec_dir / "background.pha") as hdul:
         pha = hdul["SPECTRUM"].data #type: ignore
         counts = np.array(pha["COUNTS"])
     countRate = ((counts / exposureTime) / dE)/num_det_pixels #puts the y-axis in the correct units.
@@ -72,7 +80,7 @@ def plot_background_spectrum(num_det_pixels, exposureTime, output_dir, spec_dir)
     plt.yscale("log")
     plt.xscale('log')
     plt.title("Simulated background Spectrum")
-    plt.savefig(f"{output_dir}/sim_background_spectrum.png", dpi=300, bbox_inches="tight")
+    plt.savefig(output_dir / "sim_background_spectrum.png", dpi=300, bbox_inches="tight")
     plt.close()
 
 

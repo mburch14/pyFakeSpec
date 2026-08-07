@@ -10,6 +10,9 @@ def run_all(instrument, source, instrument_json, source_file, output_dir, spec_d
     1. Generate response files
     2. Generate background spectrum
     3. Generate observation spectrum
+
+    ex: pysimsat.workflow.run_all("SWIFTBAT", "CRAB-SWIFTBAT", "example_sat_source/instrumentCharacteristics.json", "example_sat_source/source.json", "outputs", "spectrum_files", "response_files")
+    or pysimsat.workflow.run_all("ASTROSAT", "CRAB-ASTROSAT", "example_sat_source/instrumentCharacteristics.json", "example_sat_source/source.json", "outputs", "spectrum_files", "response_files")
     """
     # Generate response files
     print("\nGenerating response files...\n")
@@ -17,7 +20,7 @@ def run_all(instrument, source, instrument_json, source_file, output_dir, spec_d
 
     # Generate background spectrum
     print("\nGenerating background spectrum...\n")
-    gen_background(background, mission, sourcechars["exposure"], chars["num_det_pixels"], output_dir, spec_dir, resp_dir)
+    gen_background(background, mission, sourcechars, chars["num_det_pixels"], output_dir, spec_dir, resp_dir)
 
     # Generate observation spectrum
     print("\nGenerating observation spectrum...\n")

@@ -35,17 +35,17 @@ def load_source(source_name, source_json):
     return sources[source_name]
 
 
-def build_instrument(chars, instrumentname):
+def build_instrument(chars, sourcechars, instrumentname):
 
     mask_type = chars["mask_material"]
 
     #This is for our specific Cubesat
-    orb = mc.Orbit(chars["altitude"], chars['inclination'])
-    geo = mc.geometry(chars['config'])
+    orb = mc.Orbit(altitude = chars["altitude"], inclination = chars['inclination'])
+    geo = mc.geometry( config = chars['config'])
     mission = mc.Mission(instrumentname, chars['e_min'], chars['e_max'])
-    mask = mc.optics(chars['mask_thickness'], chars['mask_material'], chars['mask_material_density'], mask = True)
-    detector = mc.detector(geometry=geo, orbit=orb, mission=mission, optics=mask, res=chars["spec_resolution"], grad=chars["spec_gradient"], low_ecut=chars["low_ecut"], material=chars["detector_material"], mat_density=chars["det_material_density"])
-    background = mc.BackgroundModel(detector=detector)
+    mask = mc.optics(thickness = chars['config']['maskh'], mask_material = chars['mask_material'], mask_density = chars['mask_material_density'], focusing = sourcechars["focused"])
+    detector = mc.detector(geometry = geo, orbit = orb, mission = mission, optics = mask, res = chars["spec_resolution"], grad = chars["spec_gradient"], low_ecut = chars["low_ecut"], material = chars["detector_material"], mat_density = chars["det_material_density"])
+    background = mc.BackgroundModel(detector = detector)
 
     return orb, geo, mission, detector, background, mask
 
@@ -53,6 +53,8 @@ def build_instrument(chars, instrumentname):
 def main(geo, mission, detector, output_dir, resp_dir):
 
     print(f'field of view: {geo.fov_sr} steradians')
+
+    print(f'half coded field of view: {geo.half_coded_fov} steradians')
 
     #Generates the .arf and the .rsp file to be used by xspec. Then, generates a ASCII file for the background spectrum.
     arfname = detector.gen_arf(energy_lo = detector.energy_low, energy_hi = detector.energy_high, arf=f"{resp_dir}/{mission.name}.arf")
@@ -67,13 +69,13 @@ def main(geo, mission, detector, output_dir, resp_dir):
     plt.ylabel(r"Effective Area ($cm^2$)")
     plt.xscale('log')
     plt.title(f'effective area of {mission.name}')
-    plt.savefig(f"{output_dir}/EffectiveArea.png", dpi=300, bbox_inches="tight")
+    plt.savefig(f"{output_dir}/effectiveArea.png", dpi=300, bbox_inches="tight")
     plt.close()
 
 def gen_rsp(instrument, source, instrument_json, source_file, output_dir, resp_dir):
     chars = load_instrument(instrument, instrument_json)
     sourcechars = load_source(source, source_file)
-    orb, geo, mission, detector, background, mask = build_instrument(chars, instrument)
+    orb, geo, mission, detector, background, mask = build_instrument(chars, sourcechars, instrument)
     main(geo, mission, detector, output_dir, resp_dir)
 
     return chars, sourcechars, background, mission

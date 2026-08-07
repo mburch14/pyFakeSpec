@@ -1,3 +1,18 @@
+Metadata-Version: 2.4
+Name: pysimsat
+Version: 0.1.1
+Summary: Simulation tools for X-ray instrument response and spectra
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: numpy
+Requires-Dist: matplotlib
+Requires-Dist: astropy
+Requires-Dist: commentjson
+Requires-Dist: xraydb
+Requires-Dist: scipy
+Dynamic: license-file
+
 pySimSat is a python simulation program that can be used to generate response files and xspec spectra based on the characteristics of a concept cubesat mission. Cubesat characteristics include orbit, geometry, background, and detector characteristics.
 For complete documentation on the spectraSat simulation program, go to: https://www.overleaf.com/read/crpvqtrnmzqn#dc0bc0
 

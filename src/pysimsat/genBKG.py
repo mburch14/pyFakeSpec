@@ -21,8 +21,7 @@ params = {
 }
 plt.rcParams.update(params)
 
-def generate_background_spectrum(background, mission, exposureTime, spec_dir, resp_dir, albedo = True, particle = True):
-
+def generate_background_spectrum(background, mission, sourcechars, spec_dir, resp_dir):
 
     #remove existing background models if they exist.
     for f in ["bkg.mod", "bkg.mod.gz"]:
@@ -35,7 +34,7 @@ def generate_background_spectrum(background, mission, exposureTime, spec_dir, re
     if os.path.exists(f"{spec_dir}/background.dat"):
         os.remove(f"{spec_dir}/background.dat")
 
-    backgroundname = background.gen_spectrum_table(output = f'{spec_dir}/background.dat', albedo= albedo, particle= particle)
+    backgroundname = background.gen_spectrum_table(output = f'{spec_dir}/background.dat', cxb = sourcechars["cxb"], albedo= sourcechars["albedo"], particle= sourcechars["particle"])
 
     AllData.clear()
     AllModels.clear()
@@ -45,7 +44,7 @@ def generate_background_spectrum(background, mission, exposureTime, spec_dir, re
     bkg_model = Model("atable{bkg.mod}")
 
     #run xspec on the model using the response files. 
-    fake = FakeitSettings(response= f"{resp_dir}/{mission.name}.rsp", exposure= str(exposureTime), fileName=f"{spec_dir}/background.pha")
+    fake = FakeitSettings(response = f"{resp_dir}/{mission.name}.rsp", exposure = str(sourcechars["exposure"]), fileName = f"{spec_dir}/background.pha")
     AllData.fakeit(1, fake)
 
 
@@ -77,6 +76,6 @@ def plot_background_spectrum(num_det_pixels, exposureTime, output_dir, spec_dir)
     plt.close()
 
 
-def gen_background(background, mission, exposureTime, num_det_pixels, output_dir, spec_dir, resp_dir):
-    generate_background_spectrum(background, mission, exposureTime, spec_dir, resp_dir)
-    plot_background_spectrum(num_det_pixels, exposureTime, output_dir, spec_dir)
+def gen_background(background, mission, sourcechars, num_det_pixels, output_dir, spec_dir, resp_dir):
+    generate_background_spectrum(background, mission, sourcechars, spec_dir, resp_dir)
+    plot_background_spectrum(num_det_pixels, sourcechars["exposure"], output_dir, spec_dir)

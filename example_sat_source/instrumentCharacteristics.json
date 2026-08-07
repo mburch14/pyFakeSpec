@@ -9,14 +9,13 @@
         "detw": 102.4,//cm
         "dett": 2,//mm
         "detsep": 100, //cm; seporation between mask and detector
-        "imagTransmission": 0.5,
-        "length": 114.07,//cm
-        "width": 228.03, //cm
-        "height": 200, //cm
+        "maskOpen": 0.5,
+        "maskl": 116.19,//cm
+        "maskw": 232.38, //cm
+        "maskh": 1, //mm
         "collimator": false}, //True if the cubesat is using a collimator, False if it is using a mask.
     "spec_resolution": 4106,//eV @1keV
     "spec_gradient": 35,// eV/keV
-    "mask_thickness": 1, //mm
     "detector_material": "Cd0.9Zn0.1Te", // detector material
     "det_material_density": 5.78, // g/cm^3
     "mask_material": "Pb", // mask material
@@ -29,22 +28,21 @@
     "altitude": 650,
     "inclination": 6,//degrees
     "e_min": 20,//keV
-    "e_max": 100,//keV
+    "e_max": 200,//keV
     "config":{
         "detl": 31.24,//cm
         "detw": 31.24,//cm
         "dett": 5,//mm
+        "detsep": 48, //cm, seporation between mask and detector
         "coll": 3.9,//cm
         "colw": 3.9,//cm
-        "colh": 48, //cm
-        "imagTransmission": 0.5,
-        "length": 50,//cm
-        "width": 50, //cm
-        "height": 70, //cm
-        "collimator": true},//True if the cubesat is using a collimator, False if it is using a mask.
+        "maskOpen": 0.5,
+        "maskl": 50,//cm
+        "maskw": 50, //cm
+        "maskh": 0.5, //mm
+        "collimator": true},//True if the cubesat is using a collimator, False if it is not.
     "spec_resolution": 575,//eV @1keV
     "spec_gradient": 75,// eV/keV
-    "mask_thickness": 0.5, //mm
     "detector_material": "Cd0.9Zn0.1Te", //detector material
     "det_material_density": 5.78, //g/cm^3
     "mask_material": "Ta", //mask material

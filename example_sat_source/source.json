@@ -4,6 +4,21 @@
     "exposure": 300, //sec
     "sourceShape": "powerlaw",
     "normalization": 10.17,
-    "phoIndex": 2.15
+    "phoIndex": 2.15,
+    "focused": false,
+    "cxb": true,
+    "albedo": false,
+    "particle": false
+    },
+"CRAB-ASTROSAT": {
+    "name": "Crab",
+    "exposure": 5000, //sec
+    "sourceShape": "powerlaw",
+    "normalization": 8.97,
+    "phoIndex": 2.08,
+    "focused": false,
+    "cxb": false,
+    "albedo": false,
+    "particle": true
 }
 }

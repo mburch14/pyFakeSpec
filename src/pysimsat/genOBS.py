@@ -73,7 +73,7 @@ def plot_observation_spectrum(sourcename, exposureTime, output_dir, spec_dir):
 
 def calculate_snr(spec_dir):
     obs = fits.getdata(f"{spec_dir}/observation.pha", 1)["COUNTS"].sum() #type: ignore
-    bkg = fits.getdata(f"{spec_dir}/observation_bkg.pha", 1)["COUNTS"].sum() #type:ignore
+    bkg = fits.getdata(f"{spec_dir}/observation_bkg.pha", 1)["COUNTS"].sum() #type: ignore
 
     print("Source counts:", obs-bkg)
     print("Background counts:", bkg)

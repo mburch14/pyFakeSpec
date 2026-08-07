@@ -28,67 +28,59 @@ class Orbit:
         #The fraction of the sky blocked by the Earth, assuming a circular orbit and a spherical Earth.
         self.earth_blocking_fraction = 0.5 * (1 - np.cos(self.theta))
 
-    def __str__(self):
-        return (f"{self.altitude} km circular orbit\n" f"Inclination: {self.inclination}°\n")
-
 
 class geometry:
 
-    defaults = {
-    "detl": 51.2,#cm
-    "detw": 102.4,#cm
-    "dett": 2,#mm
-    "detsep": 1000,#cm; seporation between mask and detector
-    "imagTransmission": 0.5,#percentage of mask covered up
-    "length": 1200,#cm
-    "width": 2400,#cm
-    "height":2000, #cm
-    "partial_coded": False}#cm
-
-    def __init__(self, config=None):
-        config = config or {} #either use the provided config or an empty dict if none is provided
-        settings = self.defaults.copy()
-        settings.update(config) #add any inputted config values to the defaults
+    def __init__(self, config):
 
         #dimension of the detector in cm
-        self.detl = settings["detl"]
-        self.detw = settings["detw"]
-        self.detthickness = settings["dett"] #thickness of the detector
-        self.detsep = settings["detsep"] #seporation between mask and detector
+        self.detl = config["detl"]
+        self.detw = config["detw"]
+        self.detthickness = config["dett"] #thickness of the detector
+        self.detsep = config["detsep"] #seporation between mask and detector
 
         #represented as a decimal between 0 and 1, where 1 is 100% transmission and 0 is 0% transmission. This is the fraction of open slots in mask (Does not consider optics).
-        self.imagTransmission = settings["imagTransmission"]
+        self.maskOpen = config["maskOpen"]
 
         #dimension of the cubesat in cm
-        self.l = settings["length"]
-        self.w = settings["width"]
-        self.h = settings["height"]
-        self.collimator = settings["collimator"] #True if the cubesat is using a collimator, False if it is using a mask. If it is using a collimator, the field of view will be calculated using the formula for the solid angle of a rectangle with the dimensions of the mask, rather than the dimensions of the detector.
+        self.maskl = config["maskl"]
+        self.maskw = config["maskw"]
+        self.maskh = config["maskh"]
+        self.collimator = config["collimator"] #True if the cubesat is using a collimator, False if it is using a mask. If it is using a collimator, the field of view will be calculated using the formula for the solid angle of a rectangle with the dimensions of the mask, rather than the dimensions of the detector.
 
         if self.collimator:
-            #wfov is the field of view in the width direction; lfov is the field of view in the length direction
-            self.coll = settings["coll"] #cm, collimator length
-            self.colw = settings["colw"] #cm, collimator width
-            self.colh = settings["colh"] #cm, collimator height
-            self.wfov = 2*math.atan(self.colw / (2*self.colh)) #in radians
-            self.lfov = 2*math.atan(self.coll / (2*self.colh)) #in radians
+
+            self.coll = config["coll"] #cm, collimator length
+            self.colw = config["colw"] #cm, collimator width
+
+            #fully coded field of view in the width direction; fully coded field of view in the length direction
+            self.wfov = 2*math.atan(self.colw / (2*self.detsep)) #in radians
+            self.lfov = 2*math.atan(self.coll / (2*self.detsep)) #in radians
+
+            #half coded field of view in the width direction; half coded field of view in the length direction
+            self.half_coded_w = 2 * math.atan(self.colw / self.detsep) #in radians
+            self.half_coded_l = 2 * math.atan(self.coll / self.detsep) #in radians
 
         else:
             #wfov is the field of view in the width direction; lfov is the field of view in the length direction
-            self.wfov = 2*math.atan((self.w -self.detw) / (2*(self.detsep))) #in radians
-            self.lfov = 2*math.atan((self.l -self.detl) / (2*(self.detsep))) #in radians
+            self.wfov = 2*math.atan((self.maskw -self.detw) / (2*(self.detsep))) #in radians
+            self.lfov = 2*math.atan((self.maskl -self.detl) / (2*(self.detsep))) #in radians
+
+            #half coded field of view in the width direction; half coded field of view in the length direction
+            self.half_coded_w = 2 * math.atan(self.maskw / (2*(self.detsep))) #in radians
+            self.half_coded_l = 2 * math.atan(self.maskl / (2*(self.detsep))) #in radians
 
         #total field of view in steradians, calculated using the formula for the solid angle of a rectangle
-        self.fov_sr = 4 * np.arcsin(np.sin(self.wfov / 2) * np.sin(self.lfov / 2))
+        self.fov_sr = 4 * math.asin(np.sin(self.wfov / 2) * np.sin(self.lfov / 2))
+
+        self.half_coded_fov = 4 * math.asin(np.sin(self.half_coded_w / 2) * np.sin(self.half_coded_l / 2))
 
         #collecting area in cm^2; assuming that the photons are othogonal to the detector. if not safe assumption, multiply by cos(theta).
-        self.collecting_area = self.imagTransmission * self.detl * self.detw
-
-    def __str__(self):
-        return f"This is a {(self.l* self.w* self.h)/1000}U cubesat with a {round(np.rad2deg(self.wfov), 2)} by {round(np.rad2deg(self.lfov), 2)} degree field of view and {self.imagTransmission*100}% transmission."
+        self.collecting_area = self.maskOpen * self.detl * self.detw
 
 
 class BackgroundModel:
+
     def __init__(self, detector):
         self.detector = detector
 
@@ -110,15 +102,20 @@ class BackgroundModel:
         pc = np.sqrt((energy + mc2)**2 - mc2**2) #GeV
         return pc/abs(Z) #GV4
 
-    def gen_spectrum_table(self, output, albedo = False, particle = True):
+    def gen_spectrum_table(self, output, cxb, albedo, particle):
         energies = self.detector.energy #Gives energy bin midpoints in keV
         energy_lo = self.detector.energy_low #Gives energy bin lower bounds in keV
         energy_hi = self.detector.energy_high #Gives energy bin upper bounds in keV
 
         #flux in units of photons/cm2/s/keV
-        fluxes = 1.25* np.array(self.cxb(energies, self.detector.geos.fov_sr))
+        fluxes = 0
+        if cxb:
+            fluxes = 1.33 * np.array(self.cxb(energies, self.detector.geos.fov_sr))
         if albedo:
             fluxes += self.albedo(energies, self.detector.geos.fov_sr)
+        if particle:
+            fluxes += self.astrosat_background(energies, self.detector.geos.fov_sr)
+            
         table = np.column_stack((energy_lo, energy_hi, fluxes))
         np.savetxt(output, table, fmt="%.6f %.6f %.8e", comments="")
         return output
@@ -144,6 +141,10 @@ class BackgroundModel:
         energy = np.asarray(energy)
         intensity = const / ((energy / EB) ** Gamma1 + (energy / EB) ** Gamma2)
         return intensity * fov_sr
+
+    def astrosat_background(self, energy, fov_sr):
+        #Astrosat background spectrum
+        return 87.4 * energy**(-2.3) * fov_sr
 
 
 class ChargedParticles(BackgroundModel):
@@ -221,11 +222,11 @@ class detector():
         atten_const = xraydb.material_mu(self.material_formula, energy * 1000, density=self.material_density)
         tdet = 1-np.exp(-atten_const * self.geos.detthickness * 0.1) #The 0.1 is to convert from mm to cm, since the thickness is in mm and the attenuation constant is in cm^-1.
 
-        if self.optics.mask:
-            f = self.geos.imagTransmission
-            tmask = self.optics.transmission(energy)
-            acoll += tmask *(1- f)*self.geos.detl*self.geos.detw
+        f = self.geos.maskOpen
+        tmask = self.optics.transmission(energy)
+        acoll += tmask *(1- f)*self.geos.detl*self.geos.detw
 
+        if self.optics.focusing:
             Tmean = f * 1 + (1 - f) * tmask
             varience = f*(1 -Tmean)**2 + (1 -f)*(tmask- Tmean)**2
             coding_eff = np.sqrt(varience)
@@ -288,9 +289,9 @@ class detector():
 
 
 class optics():
-    def __init__(self, thickness, mask_material, mask_density, mask):
+    def __init__(self, thickness, mask_material, mask_density, focusing):
         self.thickness = thickness
-        self.mask = mask
+        self.focusing = focusing
         self.mask_element = mask_material
         self.mask_density = mask_density
 

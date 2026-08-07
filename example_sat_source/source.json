@@ -14,8 +14,8 @@
     "name": "Crab",
     "exposure": 5000, //sec
     "sourceShape": "powerlaw",
-    "normalization": 8.97,
-    "phoIndex": 2.08,
+    "normalization": 10.17,
+    "phoIndex": 2.15,
     "focused": false,
     "cxb": false,
     "albedo": false,

@@ -239,6 +239,11 @@ class detector():
 
         return coding_eff * weight * acoll * tdet
 
+    def det_absorption(self, energy):
+        #Energy in kev. xraydb.mu_elam takes energy in eV, so we multiply by 1000 to convert from keV to eV.
+        atten_const = xraydb.material_mu(self.material_formula, energy * 1000, density=self.material_density)
+        return 1-np.exp(-atten_const * self.geos.detthickness * 0.1) #The 0.1 is to convert from mm to cm, since the thickness is in mm and the attenuation constant is in cm^-1.
+
     def gen_arf(self,arf, energy_lo=None, energy_hi=None):
         if energy_lo is None or energy_hi is None:
             energy_edges = np.linspace(self.missions.energymin, self.missions.energymax, self.missions.energymax - self.missions.energymin + 1)
